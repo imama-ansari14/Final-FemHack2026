@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "./Avatar";
+import NotificationBell from "./NotificationBell";
 
 export default function Navbar({ user, onUserUpdate }) {
   const router = useRouter();
@@ -61,6 +62,7 @@ export default function Navbar({ user, onUserUpdate }) {
         {user && (
           <div className="flex items-center gap-3">
             {error && <span className="text-xs text-coral-600">{error}</span>}
+            {user.role === "customer" && <NotificationBell />}
             <button
               onClick={handleAvatarClick}
               title="Change profile picture"

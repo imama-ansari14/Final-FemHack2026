@@ -1,10 +1,8 @@
-// Custom server: runs Next.js and attaches Socket.IO to the SAME http server.
-// This is what makes real-time updates (new messages, status changes) possible.
 require("dotenv").config({ path: ".env.local" });
 const { createServer } = require("http");
 const next = require("next");
 const { Server } = require("socket.io");
-const jwt = require("jsonwebtoken");
+const { verifyToken, COOKIE_NAME } = require("./lib/auth");
 
 const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
@@ -13,52 +11,32 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   const httpServer = createServer((req, res) => handle(req, res));
-
-  const io = new Server(httpServer, {
-    cors: { origin: "*" },
-  });
-
-  // Make io reachable from API routes via global scope.
-  // (Next.js API routes run in the same process as this server.)
+  const io = new Server(httpServer, { cors: { origin: "*" } });
   global._io = io;
 
   io.use((socket, next2) => {
-    // Optional lightweight auth: client sends its JWT when connecting.
     try {
-      const token = socket.handshake.auth?.token;
-      if (token) {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        socket.user = decoded;
+      const cookieHeader = socket.handshake.headers.cookie || "";
+      const match = cookieHeader.split(";").map((c) => c.trim()).find((c) => c.startsWith(`${COOKIE_NAME}=`));
+      if (match) {
+        const token = match.split("=")[1];
+        socket.user = verifyToken(token);
       }
     } catch (err) {
-      // Invalid token -> connection still allowed but socket.user stays undefined.
+      // invalid/missing cookie -> socket.user stays undefined, connection still allowed
     }
     next2();
   });
 
   io.on("connection", (socket) => {
-    // Each ticket gets its own "room". Anyone viewing ticket X joins room "ticket:X"
-    // and only receives events for that ticket.
-    socket.on("join-ticket", (ticketId) => {
-      socket.join(`ticket:${ticketId}`);
-    });
+    if (socket.user?.id) socket.join(`user:${socket.user.id}`);
 
-    socket.on("leave-agents", () => {
-      socket.leave("agents");
-    });
-
-    // Simple typing indicator (bonus feature)
-    socket.on("typing", ({ ticketId, name }) => {
-      socket.to(`ticket:${ticketId}`).emit("typing", { name });
-    });
-
-    // Agents join a shared "agents" room to get live dashboard updates
-    socket.on("join-agents", () => {
-      socket.join("agents");
-    });
+    socket.on("join-ticket", (ticketId) => socket.join(`ticket:${ticketId}`));
+    socket.on("leave-ticket", (ticketId) => socket.leave(`ticket:${ticketId}`));
+    socket.on("join-agents", () => socket.join("agents"));
+    socket.on("leave-agents", () => socket.leave("agents"));
+    socket.on("typing", ({ ticketId, name }) => socket.to(`ticket:${ticketId}`).emit("typing", { name }));
   });
 
-  httpServer.listen(port, () => {
-    console.log(`> SupportFlow ready on http://localhost:${port}`);
-  });
+  httpServer.listen(port, () => console.log(`> Ready on http://localhost:${port}`));
 });

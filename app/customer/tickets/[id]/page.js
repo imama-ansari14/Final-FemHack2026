@@ -11,6 +11,67 @@ import LoadingSpinner from "../../../../components/LoadingSpinner";
 import Banner from "../../../../components/Banner";
 import { getSocket } from "../../../../lib/socketClient";
 
+function ReviewForm({ ticketId, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e) {
+    e.preventDefault();
+    if (!rating) return setError("Please select a star rating.");
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/tickets/${ticketId}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comment }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not submit review.");
+      onSubmitted(data.ticket);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-4 space-y-3 rounded-xl border border-teal-100 bg-teal-50/40 p-4">
+      <p className="text-sm font-semibold text-ink-900">Rate this resolution</p>
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            type="button"
+            key={n}
+            onClick={() => setRating(n)}
+            className={`text-2xl transition ${n <= rating ? "text-amber-400" : "text-slate-300"}`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      <textarea
+        rows={3}
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Optional comment…"
+        className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500"
+      />
+      {error && <Banner type="error">{error}</Banner>}
+      <button
+        type="submit"
+        disabled={saving}
+        className="rounded-lg bg-ink-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-ink-800 disabled:opacity-50"
+      >
+        {saving ? "Submitting…" : "Submit review"}
+      </button>
+    </form>
+  );
+}
+
 function TicketDetail({ user }) {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
@@ -33,7 +94,7 @@ function TicketDetail({ user }) {
   useEffect(() => {
     const socket = getSocket();
     function onTicketUpdated({ ticket: updated }) {
-      if (updated._id === id) setTicket(updated);
+      if (updated && updated._id === id) setTicket(updated);
     }
     socket.on("ticket:updated", onTicketUpdated);
     return () => socket.off("ticket:updated", onTicketUpdated);
@@ -63,7 +124,7 @@ function TicketDetail({ user }) {
                 {ticket.assignedAgent ? (
                   <span>Assigned to {ticket.assignedAgent.name}</span>
                 ) : (
-                  <span>Waiting for an agent to pick this up</span>
+                  <span>Waiting for a worker to pick this up</span>
                 )}
               </div>
               {ticket.status === "Resolved" && ticket.resolutionNote && (
@@ -71,6 +132,19 @@ function TicketDetail({ user }) {
                   <Banner type="success">
                     <strong>Resolved:</strong> {ticket.resolutionNote}
                   </Banner>
+                </div>
+              )}
+
+              {ticket.status === "Resolved" && !ticket.review?.rating && (
+                <ReviewForm ticketId={id} onSubmitted={setTicket} />
+              )}
+              {ticket.review?.rating && (
+                <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+                  <p className="text-sm font-medium text-ink-900">
+                    Your rating: {"★".repeat(ticket.review.rating)}
+                    {"☆".repeat(5 - ticket.review.rating)}
+                  </p>
+                  {ticket.review.comment && <p className="mt-1 text-sm text-slate-600">{ticket.review.comment}</p>}
                 </div>
               )}
             </div>
