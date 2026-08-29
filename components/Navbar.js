@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Avatar from "./Avatar";
 import NotificationBell from "./NotificationBell";
+import { LogOut, Camera } from "lucide-react";
 
 export default function Navbar({ user, onUserUpdate }) {
   const router = useRouter();
@@ -63,18 +64,9 @@ export default function Navbar({ user, onUserUpdate }) {
           <div className="flex items-center gap-3">
             {error && <span className="text-xs text-coral-600">{error}</span>}
             {user.role === "customer" && <NotificationBell />}
-            <button
-              onClick={handleAvatarClick}
-              title="Change profile picture"
-              className="relative rounded-full transition hover:opacity-80"
-            >
-              <Avatar user={user} size={36} />
-              {uploading && (
-                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                </span>
-              )}
-            </button>
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-white ring-2 ring-white">
+              <Camera size={10} />
+            </span>
             <input
               ref={fileInputRef}
               type="file"
@@ -88,8 +80,9 @@ export default function Navbar({ user, onUserUpdate }) {
             </div>
             <button
               onClick={handleLogout}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+              className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
             >
+              <LogOut size={15} />
               Log out
             </button>
           </div>

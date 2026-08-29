@@ -12,8 +12,8 @@ const TicketSchema = new mongoose.Schema(
     // Human-set / human-confirmed fields (may start as AI suggestions, then get edited)
     category: {
       type: String,
-      enum: ["Billing", "Technical", "Account", "Shipping", "General"],
-      default: "General",
+      enum: ["Water Supply", "Sewage", "Electricity", "Road/Street", "Sanitation", "Other"],
+      default: "Other",
     },
     priority: {
       type: String,

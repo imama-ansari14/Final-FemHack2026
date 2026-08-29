@@ -11,7 +11,7 @@ import LoadingSpinner from "../../../../components/LoadingSpinner";
 import Banner from "../../../../components/Banner";
 import { getSocket } from "../../../../lib/socketClient";
 
-const CATEGORIES = ["Billing", "Technical", "Account", "Shipping", "General"];
+const CATEGORIES = ["Water Supply", "Sewage", "Electricity", "Road/Street", "Sanitation", "Other"];
 const PRIORITIES = ["Low", "Medium", "High"];
 const STATUSES = ["New", "Assigned", "In Progress", "Resolved"];
 
