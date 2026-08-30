@@ -43,8 +43,8 @@ app.prepare().then(() => {
       socket.join(`ticket:${ticketId}`);
     });
 
-    socket.on("leave-ticket", (ticketId) => {
-      socket.leave(`ticket:${ticketId}`);
+    socket.on("leave-agents", () => {
+      socket.leave("agents");
     });
 
     // Simple typing indicator (bonus feature)

@@ -7,9 +7,14 @@ const { emitToTicket, emitToAgents } = require("../../../../lib/emitSocket");
 
 async function canAccessTicket(user, ticket) {
   if (user.role === "admin") return true;
-  if (user.role === "customer") return ticket.customer.toString() === user.id;
+  if (user.role === "customer") {
+    const customerId = ticket.customer._id ? ticket.customer._id.toString() : ticket.customer.toString();
+    return customerId === user.id;
+  }
   if (user.role === "agent") {
-    return !ticket.assignedAgent || ticket.assignedAgent.toString() === user.id;
+    if (!ticket.assignedAgent) return true;
+    const agentId = ticket.assignedAgent._id ? ticket.assignedAgent._id.toString() : ticket.assignedAgent.toString();
+    return agentId === user.id;
   }
   return false;
 }
@@ -94,7 +99,7 @@ export async function PATCH(request, { params }) {
   await ticket.save();
 
   emitToTicket(ticket._id.toString(), "ticket:updated", { ticket });
-  emitToAgents("ticket:updated", { ticketId: ticket._id.toString() });
+  emitToAgents("queue:updated", { ticketId: ticket._id.toString() });
 
   return NextResponse.json({ ticket });
 }

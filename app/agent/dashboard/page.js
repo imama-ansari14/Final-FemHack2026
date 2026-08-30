@@ -39,7 +39,7 @@ function Dashboard({ user }) {
     fetch("/api/stats")
       .then((res) => res.json())
       .then((data) => !data.error && setStats(data))
-      .catch(() => {});
+      .catch(() => { });
   }
 
   useEffect(() => {
@@ -52,10 +52,11 @@ function Dashboard({ user }) {
       loadStats();
     }
     socket.on("ticket:new", refresh);
-    socket.on("ticket:updated", refresh);
+    socket.on("queue:updated", refresh);
     return () => {
       socket.off("ticket:new", refresh);
-      socket.off("ticket:updated", refresh);
+      socket.off("queue:updated", refresh);
+      socket.emit("leave-agents");   // new
     };
   }, []);
 
@@ -97,11 +98,10 @@ function Dashboard({ user }) {
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
-                filter === f
-                  ? "border-ink-900 bg-ink-900 text-white"
-                  : "border-slate-200 text-slate-600 hover:border-slate-300"
-              }`}
+              className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${filter === f
+                ? "border-ink-900 bg-ink-900 text-white"
+                : "border-slate-200 text-slate-600 hover:border-slate-300"
+                }`}
             >
               {f}
             </button>

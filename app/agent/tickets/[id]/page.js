@@ -46,7 +46,7 @@ function AgentTicketDetail({ user }) {
   useEffect(() => {
     const socket = getSocket();
     function onTicketUpdated({ ticket: updated }) {
-      if (updated._id === id) {
+      if (updated && updated._id === id) {
         setTicket(updated);
         setTriage({ category: updated.category, priority: updated.priority, summary: updated.summary });
       }
@@ -294,11 +294,10 @@ function AgentTicketDetail({ user }) {
                           key={s}
                           onClick={() => changeStatus(s)}
                           disabled={saving || ticket.status === s}
-                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                            ticket.status === s
+                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${ticket.status === s
                               ? "border-ink-900 bg-ink-900 text-white"
                               : "border-slate-200 text-slate-600 hover:border-slate-300"
-                          }`}
+                            }`}
                         >
                           {s}
                         </button>

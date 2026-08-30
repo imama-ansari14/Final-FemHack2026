@@ -60,7 +60,7 @@ export async function PATCH(request, { params }) {
   await ticket.save();
 
   emitToTicket(ticket._id.toString(), "ticket:updated", { ticket });
-  emitToAgents("ticket:updated", { ticketId: ticket._id.toString() });
+ emitToAgents("queue:updated", { ticketId: ticket._id.toString() });
 
   return NextResponse.json({ ticket });
 }
