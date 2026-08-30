@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+const Notification = require("../../../../../models/Notification");
 
 const connectDB = require("../../../../../lib/db");
 const Ticket = require("../../../../../models/Ticket");
@@ -13,6 +14,17 @@ const WORKFLOW = [
   "In Progress",
   "Resolved",
 ];
+
+await ticket.save();
+if (status === "Resolved") {
+  await Notification.create({
+    user: ticket.customer,
+    ticket: ticket._id,
+    type: "ticket_completed",
+    title: "Complaint completed",
+    message: `Your ticket ${ticket.ticketNumber} has been completed. Tap to review the service.`,
+  });
+}
 
 export async function PATCH(request, { params }) {
   const user = getUserFromRequest(request);
