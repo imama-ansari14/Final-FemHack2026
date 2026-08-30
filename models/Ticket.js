@@ -37,8 +37,37 @@ const TicketSchema = new mongoose.Schema(
       reviewedByAgent: { type: Boolean, default: false },
     },
 
-    resolutionNote: { type: String, default: "" },
-    resolvedAt: { type: Date, default: null },
+
+    resolutionNote: {
+      type: String,
+      default: "",
+    },
+
+    resolvedAt: {
+      type: Date,
+      default: null,
+    },
+
+    review: {
+      rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+        default: null,
+      },
+
+      comment: {
+        type: String,
+        default: "",
+      },
+
+      reviewedAt: {
+        type: Date,
+        default: null,
+      },
+    },
+
+
   },
   { timestamps: true }
 );
