@@ -55,26 +55,39 @@ function AgentTicketDetail({ user }) {
     return () => socket.off("ticket:updated", onTicketUpdated);
   }, [id]);
 
-  async function saveTriage(extra = {}) {
+  async function saveTriage() {
     setSaving(true);
     setError("");
     setSuccess("");
+
     try {
       const res = await fetch(`/api/tickets/${id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...triage, ...extra }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(triage),
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not save changes.");
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || "Could not save triage."
+        );
+      }
+
       setTicket(data.ticket);
-      setSuccess(extra.claim ? "Ticket claimed and triage saved." : "Triage saved.");
+
+      setSuccess("Triage saved successfully.");
     } catch (err) {
       setError(err.message);
     } finally {
       setSaving(false);
     }
   }
+
+
 
   async function changeStatus(status) {
     setSaving(true);
@@ -120,26 +133,6 @@ function AgentTicketDetail({ user }) {
     }
   }
 
-  async function reopenTicket() {
-    setSaving(true);
-    setError("");
-    try {
-      const res = await fetch(`/api/tickets/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reopen: true }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not reopen ticket.");
-      setTicket(data.ticket);
-      setSuccess("Ticket reopened.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
   if (error && !ticket) {
     return (
       <div className="min-h-screen">
@@ -161,7 +154,6 @@ function AgentTicketDetail({ user }) {
   }
 
   const isMine = ticket.assignedAgent?._id === user.id || ticket.assignedAgent === user.id;
-  const isUnassigned = !ticket.assignedAgent;
 
   return (
     <div className="min-h-screen">
@@ -255,26 +247,8 @@ function AgentTicketDetail({ user }) {
                   />
                 </div>
 
-                <div className="flex gap-2 pt-1">
-                  {isUnassigned && (
-                    <button
-                      onClick={() => saveTriage({ claim: true })}
-                      disabled={saving}
-                      className="flex-1 rounded-lg bg-ink-900 py-2 text-sm font-medium text-white transition hover:bg-ink-800 disabled:opacity-50"
-                    >
-                      Claim & save
-                    </button>
-                  )}
-                  {!isUnassigned && isMine && ticket.status !== "Resolved" && (
-                    <button
-                      onClick={() => saveTriage()}
-                      disabled={saving}
-                      className="flex-1 rounded-lg bg-ink-900 py-2 text-sm font-medium text-white transition hover:bg-ink-800 disabled:opacity-50"
-                    >
-                      Save changes
-                    </button>
-                  )}
-                </div>
+                <div className="pt-1"> {isMine && ticket.status !== "Resolved" && (<button onClick={saveTriage} disabled={saving} className="w-full rounded-lg bg-ink-900 py-2 text-sm font-medium text-white transition hover:-translate-y-0.5 hover:bg-ink-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50" > {saving ? "Saving..." : "Save triage"} </button>)} {!isMine && ticket.assignedAgent && (<p className="text-xs text-slate-500"> Assigned to{" "} <span className="font-medium text-slate-700"> {ticket.assignedAgent.name} </span> . Only the assigned worker can edit triage. </p>)} </div>
+
                 {!isUnassigned && !isMine && (
                   <p className="text-xs text-slate-500">
                     Assigned to {ticket.assignedAgent?.name}. Only they can edit triage.
@@ -295,8 +269,8 @@ function AgentTicketDetail({ user }) {
                           onClick={() => changeStatus(s)}
                           disabled={saving || ticket.status === s}
                           className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${ticket.status === s
-                              ? "border-ink-900 bg-ink-900 text-white"
-                              : "border-slate-200 text-slate-600 hover:border-slate-300"
+                            ? "border-ink-900 bg-ink-900 text-white"
+                            : "border-slate-200 text-slate-600 hover:border-slate-300"
                             }`}
                         >
                           {s}
@@ -344,13 +318,6 @@ function AgentTicketDetail({ user }) {
                     <Banner type="success">
                       <strong>Resolution note:</strong> {ticket.resolutionNote}
                     </Banner>
-                    <button
-                      onClick={reopenTicket}
-                      disabled={saving}
-                      className="w-full rounded-lg border border-slate-200 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-                    >
-                      Reopen ticket
-                    </button>
                   </div>
                 )}
               </div>
