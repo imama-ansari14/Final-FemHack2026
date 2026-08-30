@@ -9,7 +9,7 @@ export async function GET(request) {
     return NextResponse.json({ user: null }, { status: 200 });
   }
   await connectDB();
-  const user = await User.findById(tokenUser.id).select("name email role");
+const user = await User.findById(tokenUser.id).select("name email role avatarDataUrl");
   if (!user) return NextResponse.json({ user: null }, { status: 200 });
   return NextResponse.json({ user });
 }
